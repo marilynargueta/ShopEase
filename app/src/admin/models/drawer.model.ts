@@ -2,6 +2,11 @@ export interface DrawerItemOption{
     name:string //nombre de la ruta
     label:string
     icon:string
+    subItems?:{
+        name:string,
+        label:string,
+        icon:string
+    }[]
 
 }
 

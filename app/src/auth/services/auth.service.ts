@@ -1,4 +1,4 @@
-import { AuthResponse } from "../models/auth.model";
+import { AuthResponse, UserResponse } from "../models/auth.model";
 import axios from "axios"
 
 const API_URL="https://api-ecommerce-5aby.onrender.com"
@@ -42,5 +42,37 @@ export const AuthService={
             }
             throw new Error("error al sevidor")
         }
+    },
+    updateUser:async(
+        userId:number,
+        name:string,
+        lastname:string,
+        phone:string,
+        token:string    
+    ):Promise<UserResponse>=>{
+        try{
+            const formData=new FormData()
+            formData.append("name",name)
+            formData.append("lastname",lastname),
+            formData.append("phone",phone)
+
+            const authTokenHeader= token.startsWith("Bearer") ? token:`Bearer ${token}`
+
+            const response= await axios.put(`${API_URL}/users/upload/${userId}`,formData,{
+                headers:{
+                    "Authorization":authTokenHeader,
+                    "Content-Type":"multipart/form-data"
+                }
+            })
+            return response.data
+        }catch(error:any){
+            if(axios.isAxiosError(error) && error.response){
+                throw new Error(error.response.data?.message) || "error to login"
+            }
+
+            throw new Error("server error")
+        }
+
+        
     }
 }

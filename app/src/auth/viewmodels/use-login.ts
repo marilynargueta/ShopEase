@@ -1,9 +1,11 @@
 import { useState } from "react"
 import { AuthService } from "../services/auth.service"
 import { useRouter } from "expo-router"
+import { useAuth } from "../../context/AuthContext"
 
 export function useLogin(){
     const router=useRouter()
+    const {saveSession}=useAuth()
     const [email,setEmail]= useState("")
     const [password,setPassword]=useState("")
     const [isLoading, setIsLoading]=useState(false)
@@ -11,8 +13,7 @@ export function useLogin(){
 
     const [isPasswordVisble, setIsPasswordVisble]=useState(false)
 
-    console.log("Email value",email)
-    console.log("password value", password)
+    
 
     const togglePasswordVisibility=()=>{
         setIsPasswordVisble((prev)=>!prev)
@@ -30,8 +31,10 @@ export function useLogin(){
 
         try{
             const data= await AuthService.login(email,password)
-            console.log("TOKEN", data.token)
+            console.log("LOGIN RESPONSE:", JSON.stringify(data))
+            await saveSession(data.token,data.userResponse)
             router.replace("/(protected)/dashboard")
+
         } catch(error:any){
             setErrorMessage(error.message)
 

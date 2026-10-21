@@ -1,5 +1,5 @@
-import { View, Text, StyleSheet, KeyboardAvoidingView, Platform, TextInput, TouchableOpacity, ScrollView, ActivityIndicator } from "react-native"
 import { useRouter } from "expo-router"
+import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native"
 
 import { Feather } from "@expo/vector-icons"
 import { useRegister } from "../src/auth/viewmodels/use-register"

@@ -1,8 +1,7 @@
-import { useState } from "react";
-import { Image,StyleSheet,Text,View,TouchableOpacity, KeyboardAvoidingView, Platform,ScrollView, TextInput, ActivityIndicator } from "react-native";
+import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { useLogin } from "../src/auth/viewmodels/use-login";
 
-import {Feather} from "@expo/vector-icons"
+import { Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 
 export default function LoginScreen(){
