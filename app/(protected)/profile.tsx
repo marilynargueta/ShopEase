@@ -74,7 +74,7 @@ export default function ProfileScreen() {
                 <View style={styles.profileCard}>
                     <View style={styles.imageWrapper}>
                         <Image
-                            source={{ uri: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR6vNaL97MalsRvvG1VDo7YRci5ugFHblh7HmI4LZgurVKB58FeMrsTIXk&s=10" }}
+                            source={{ uri: "https://img.freepik.com/vector-gratis/ilustracion-dibujos-animados-tulipan-dibujado-mano_52683-124954.jpg?w=1800" }}
 
                             style={styles.profileAvatar}
                         />
@@ -83,19 +83,19 @@ export default function ProfileScreen() {
                         </TouchableOpacity>
                     </View>
 
-                    <Text style={styles.profileName}>Josue Ivan Beltran Segovia</Text>
+                    <Text style={styles.profileName}>{user?.name} {user?.lastName}</Text>
 
                     <Text style={styles.profileSubtitle}>full stack developer</Text>
 
                     <View style={styles.cardPoints}>
                         <View style={[styles.cardPointBox, styles.cardOrderColor]}>
                             <Text style={styles.cardBoxLabel}>Orders</Text>
-                            <Text style={styles.cardBoxValue}>24</Text>
+                            <Text style={styles.cardBoxValue}>18</Text>
                         </View>
 
                         <View style={[styles.cardPointBox, styles.cardPointColor]}>
                             <Text style={styles.cardBoxLabel}>points</Text>
-                            <Text style={styles.cardBoxValue}>1,250</Text>
+                            <Text style={styles.cardBoxValue}>940</Text>
                         </View>
                     </View>
                 </View>

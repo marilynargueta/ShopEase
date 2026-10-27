@@ -41,7 +41,7 @@ export default function RegisterScreen() {
                     <View style={styles.inputContainer}>
                         <Feather name="user" size={20} color="#9ca3af"></Feather>
                         <TextInput style={{ flex: 1, height: "100%", marginLeft: 8 }}
-                            placeholder="ivan beltran"
+                            placeholder="marilyn "
                             value={fullName}
                             onChangeText={setFullName}>
                         </TextInput>
@@ -52,7 +52,7 @@ export default function RegisterScreen() {
                         <Feather name="user" size={20} color="#9ca3af"></Feather>
                         <TextInput
                             style={{ flex: 1, height: "100%", marginLeft: 8 }}
-                            placeholder="segovia"
+                            placeholder="argueta"
                             value={lastName}
                             onChangeText={setLastName}
                         >
@@ -66,7 +66,7 @@ export default function RegisterScreen() {
                         <Feather name="phone" size={20} color="#9ca3af"></Feather>
                         <TextInput
                             style={{ flex: 1, height: "100%", marginLeft: 8 }}
-                            placeholder="34545698"
+                            placeholder="72995648"
                             value={phone}
                             onChangeText={setPhone}
                         >
@@ -79,7 +79,7 @@ export default function RegisterScreen() {
                     <View style={styles.inputContainer}>
                         <Feather name="mail" size={20} color="#9ca3af"></Feather>
                         <TextInput style={{ flex: 1, height: "100%", marginLeft: 8 }}
-                            placeholder="ivanbeltran@gmail.com"
+                            placeholder="marilyn@gmail.com"
                             keyboardType="email-address"
                             value={email}
                             onChangeText={setEmail}>
@@ -93,7 +93,7 @@ export default function RegisterScreen() {
                         <Feather name="lock" size={20} color="#9ca3af"></Feather>
                         <TextInput
                             style={{ flex: 1, height: "100%", marginLeft: 8 }}
-                            placeholder="*****"
+                            placeholder="******"
                             secureTextEntry={true}
                             value={password}
                             onChangeText={setPassword}>

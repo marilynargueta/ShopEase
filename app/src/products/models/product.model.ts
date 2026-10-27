@@ -22,3 +22,19 @@ export interface CreateProductResponse{
     createAt?:string
     updatedAt?:string
 }
+
+export interface ProductItem{
+    id:number
+    categoryId:number
+    categoryName:string
+    name:string
+    description:string
+    regularPrice:number
+    offerPrice?:number
+    minStockeAlert:number
+    imageUrl?:string
+    createdAt?:string
+    updatedAt?:string
+
+
+}

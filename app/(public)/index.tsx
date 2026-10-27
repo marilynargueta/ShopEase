@@ -31,7 +31,7 @@ export default function LoginScreen(){
                     <View style={styles.logoContainer}>
                         <Feather name="shopping-bag" size={25} color={"#ba1d1d"} ></Feather>
                     </View>
-                    <Text style={styles.appNameLabel}> shop easy</Text>
+                    <Text style={styles.appNameLabel}> ShopEase</Text>
                     <Text style={styles.welcomeLabel}>welcome back! please enter your details</Text>
                 </View>
                 {/* card */}
