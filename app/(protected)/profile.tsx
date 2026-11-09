@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../src/context/AuthContext';
 import { use, useEffect, useState } from 'react';
 import { AuthService } from '../src/auth/services/auth.service';
+import { filterDigits, filterLetters, validateLetters, validatePhone } from '../src/utils/validators';
 
 
 export default function ProfileScreen() {
@@ -15,6 +16,9 @@ export default function ProfileScreen() {
     const [lastname, setLastname] = useState("")
     const [phone, setphone] = useState("")
     const [isUpdating, setIsUpdating] = useState(false)
+    const [nameError, setNameError] = useState<string | null>(null)
+    const [lastnameError, setLastnameError] = useState<string | null>(null)
+    const [phoneError, setPhoneError] = useState<string | null>(null)
 
     useEffect(() => {
         if (user) {
@@ -24,9 +28,36 @@ export default function ProfileScreen() {
         }
     }, [user])
 
+    const onChangeName = (text: string) => {
+        const clean = filterLetters(text)
+        setNameError(clean !== text ? "El nombre solo puede contener letras, no números ni símbolos" : null)
+        setName(clean)
+    }
+
+    const onChangeLastname = (text: string) => {
+        const clean = filterLetters(text)
+        setLastnameError(clean !== text ? "El apellido solo puede contener letras, no números ni símbolos" : null)
+        setLastname(clean)
+    }
+
+    const onChangePhone = (text: string) => {
+        const clean = filterDigits(text)
+        setPhoneError(clean !== text ? "El teléfono solo puede contener números" : null)
+        setphone(clean)
+    }
+
     const handleUpdateUser = async () => {
-        if (!name.trim() || !lastname.trim() || !phone.trim()) {
-            Alert.alert("campos incompletos por favor llenar los campos")
+        const nError = validateLetters(name, "El nombre")
+        const lError = validateLetters(lastname, "El apellido")
+        const pError = validatePhone(phone)
+        setNameError(nError)
+        setLastnameError(lError)
+        setPhoneError(pError)
+
+        const messages = [nError, lError, pError].filter((m): m is string => !!m)
+        if (messages.length > 0) {
+            console.log("VALIDACION PERFIL:", messages)
+            Alert.alert("Revisa los datos", messages.join("\n"))
             return
         }
         if (!user?.id || !token) {
@@ -105,40 +136,44 @@ export default function ProfileScreen() {
 
                     <View style={styles.inputGroup}>
                         <Text style={styles.inputLabel}>Name</Text>
-                        <View style={styles.inputWrapper}>
+                        <View style={[styles.inputWrapper, !!nameError && styles.inputError]}>
                             <Ionicons name='person-outline' size={20} style={styles.inputIcon} />
                             <TextInput
                                 placeholder='full name'
                                 style={styles.input}
                                 value={name}
-                                onChangeText={setName}
+                                onChangeText={onChangeName}
                             />
                         </View>
+                        {nameError && <Text style={styles.fieldError}>{nameError}</Text>}
                     </View>
                     <View style={styles.inputGroup}>
                         <Text style={styles.inputLabel}>Last Name</Text>
-                        <View style={styles.inputWrapper}>
+                        <View style={[styles.inputWrapper, !!lastnameError && styles.inputError]}>
                             <Ionicons name='person-outline' size={20} style={styles.inputIcon} />
                             <TextInput
                                 placeholder='beltran segovia'
                                 style={styles.input}
                                 value={lastname}
-                                onChangeText={setLastname}
+                                onChangeText={onChangeLastname}
                             />
                         </View>
+                        {lastnameError && <Text style={styles.fieldError}>{lastnameError}</Text>}
                     </View>
                     <View style={styles.inputGroup}>
                         <Text style={styles.inputLabel}>Phone Number</Text>
-                        <View style={styles.inputWrapper}>
+                        <View style={[styles.inputWrapper, !!phoneError && styles.inputError]}>
                             <Ionicons name='call-outline' size={20} style={styles.inputIcon} />
                             <TextInput
                                 placeholder='34564567'
                                 style={styles.input}
-                                keyboardType='phone-pad'
+                                keyboardType='number-pad'
+                                maxLength={8}
                                 value={phone}
-                                onChangeText={setphone}
+                                onChangeText={onChangePhone}
                             />
                         </View>
+                        {phoneError && <Text style={styles.fieldError}>{phoneError}</Text>}
                     </View>
 
                     <TouchableOpacity
@@ -300,6 +335,15 @@ const styles = StyleSheet.create({
         paddingHorizontal: 12,
         height: 48,
         backgroundColor: "#fff"
+    },
+    inputError: {
+        borderColor: "#dc2626",
+        borderBlockColor: "#dc2626"
+    },
+    fieldError: {
+        color: "#dc2626",
+        fontSize: 12,
+        marginTop: 4
     },
     input: {
         flex: 1,

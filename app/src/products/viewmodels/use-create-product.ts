@@ -69,6 +69,7 @@ export function useCreateProduct() {
         setIsLoadingCategories(true)
         try {
             const data = await CategoryService.getCategories(token)
+            console.log("categorias recibidas:", JSON.stringify(data))
             const uniqueCategories = data.filter(
                 (c, index, arr) => arr.findIndex((x) => x.name === c.name) === index
             )
@@ -120,12 +121,13 @@ export function useCreateProduct() {
                     regularPrice: parseFloat(regularPrice),
                     offerPrice: offerPrice ? parseFloat(offerPrice) : undefined,
                     initialStock: parseInt(initialStock, 10),
-                    minStockeAlert: minStockAlert ? parseInt(minStockAlert, 10) : 0
+                    minStockAlert: minStockAlert ? parseInt(minStockAlert, 10) : 0 // CAMBIO: antes decia minStockeAlert
                 },
                 token
             )
 
             console.log("Respuesta createProduct:", JSON.stringify(response, null, 2))
+            await fetchProducts()
 
             Alert.alert(
                 "Éxito",
@@ -140,24 +142,21 @@ export function useCreateProduct() {
 
         } catch (error: any) {
             setErrorMessage(error.message)
+            console.log("ERROR CREAR PRODUCTO:", error.message)
+            Alert.alert("No se pudo guardar el producto", error.message || "Error desconocido")
         } finally {
             setIsLoadingProduct(false)
         }
-
-        const submitProduct = async () => {
-    }
     }
 
     const filteredProducts = useMemo(() => {
-        return products?.filter((p) => {
-            const query = searchQuery.toLowerCase().trim()
-            if (!query) return true
-            return {
-                name: p.name.toLowerCase().includes(query) ||
+        const query = searchQuery.toLowerCase().trim()
+        if (!query) return products
+        return products.filter(
+            (p) =>
+                p.name.toLowerCase().includes(query) ||
                 (p.description && p.description.toLowerCase().includes(query))
-            }
-        })
-
+        )
     }, [products, searchQuery])
 
 
@@ -191,7 +190,9 @@ export function useCreateProduct() {
         searchQuery,
         setSearchQuery,
         refreshProducts: fetchProducts,
+        refreshCategories: fetchCategories,
         selectedCategoryId,
         setSelectedCategoryId
+        
     }
 }

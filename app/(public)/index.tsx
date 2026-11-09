@@ -1,5 +1,7 @@
-import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { useState } from "react";
+import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { useLogin } from "../src/auth/viewmodels/use-login";
+import { validateEmail } from "../src/utils/validators";
 
 import { Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -20,6 +22,24 @@ export default function LoginScreen(){
         handleLogin        
 
     }=useLogin()
+
+    const [emailError, setEmailError] = useState<string | null>(null)
+    const [passwordError, setPasswordError] = useState<string | null>(null)
+
+    const onLogin = () => {
+        const eError = validateEmail(email)
+        const pError = !password ? "La contraseña es obligatoria" : null
+        setEmailError(eError)
+        setPasswordError(pError)
+
+        const messages = [eError, pError].filter((m): m is string => !!m)
+        if (messages.length > 0) {
+            console.log("VALIDACION LOGIN:", messages)
+            Alert.alert("Revisa los datos", messages.join("\n"))
+            return
+        }
+        handleLogin()
+    }
 
     return(
         <KeyboardAvoidingView
@@ -44,19 +64,21 @@ export default function LoginScreen(){
                     )}
 
                     <Text style={styles.label}>Email Address</Text>
-                    <View style={styles.inputContainer}>
+                    <View style={[styles.inputContainer, !!emailError && styles.inputError]}>
                         <Feather name="mail" size={20} color="#9ca3af" ></Feather>
                         <TextInput
                             style={styles.input}
                             value={email}
                             autoCapitalize="none"
-                            onChangeText={setEmail}
+                            onChangeText={(text) => { setEmail(text); setEmailError(null) }}
+                            onBlur={() => setEmailError(validateEmail(email))}
                             placeholder="name@gmail.com"
                             keyboardType="email-address"
                         >
 
                         </TextInput>
                     </View>
+                    {emailError && <Text style={styles.fieldError}>{emailError}</Text>}
 
                     <View style={styles.passwordRow}>
                         <Text style={styles.label}>password</Text>
@@ -65,15 +87,15 @@ export default function LoginScreen(){
                         </TouchableOpacity>
                     </View>
 
-                    <View style={styles.inputContainer}>
+                    <View style={[styles.inputContainer, !!passwordError && styles.inputError]}>
                         <Feather name="lock" size={20} color="#9ca3af"></Feather>
                         <TextInput
                             style={styles.input}
                             value={password}
                             autoCapitalize="none"
-                            onChangeText={setPassword}
+                            onChangeText={(text) => { setPassword(text); setPasswordError(null) }}
                             placeholder="**********"
-                            secureTextEntry={isPasswordVisble?true:false}
+                            secureTextEntry={!isPasswordVisble}
                         >
 
                         </TextInput>
@@ -83,13 +105,14 @@ export default function LoginScreen(){
                             <Feather name={isPasswordVisble?"eye-off":"eye"} size={20} color={"#9ca3af"}></Feather>
                         </TouchableOpacity>
                     </View>
+                    {passwordError && <Text style={styles.fieldError}>{passwordError}</Text>}
 
                     {isLoading ? (
                         <ActivityIndicator size="large" color="#006c47"></ActivityIndicator>
                     ):(
                         <TouchableOpacity
                         style={styles.buttonLogin}
-                        onPress={handleLogin}
+                        onPress={onLogin}
                     >
                         <Text style={styles.buttonLoginText}>Log in</Text>
                     </TouchableOpacity>
@@ -168,6 +191,15 @@ const styles=StyleSheet.create({
         paddingHorizontal:12,
         height:50,
         marginBottom:15
+    },
+    inputError:{
+        borderColor:"#dc2626"
+    },
+    fieldError:{
+        color:"#dc2626",
+        fontSize:12,
+        marginTop:-8,
+        marginBottom:12
     },
     input:{
         flex:1,

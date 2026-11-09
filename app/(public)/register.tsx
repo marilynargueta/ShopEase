@@ -1,8 +1,15 @@
 import { useRouter } from "expo-router"
-import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native"
+import { useState } from "react"
+import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native"
 
 import { Feather } from "@expo/vector-icons"
 import { useRegister } from "../src/auth/viewmodels/use-register"
+import { filterDigits, filterLetters, validateEmail, validateLetters, validatePassword, validatePhone } from "../src/utils/validators"
+
+type FieldErrors = Record<string, string | null>
+
+const FieldError = ({ message }: { message?: string | null }) =>
+    message ? <Text style={styles.fieldError}>{message}</Text> : null
 
 export default function RegisterScreen() {
 
@@ -26,6 +33,51 @@ export default function RegisterScreen() {
         isLoading
     } = useRegister()
 
+    const [showPassword, setShowPassword] = useState(false)
+    const [showConfirm, setShowConfirm] = useState(false)
+    const [errors, setErrors] = useState<FieldErrors>({})
+
+    const setFieldError = (key: string, message: string | null) =>
+        setErrors((prev) => ({ ...prev, [key]: message }))
+
+    const onChangeLetters = (text: string, key: string, label: string, setter: (v: string) => void) => {
+        const clean = filterLetters(text)
+        setFieldError(key, clean !== text ? `${label} solo puede contener letras, no números ni símbolos` : null)
+        setter(clean)
+    }
+
+    const onChangePhone = (text: string) => {
+        const clean = filterDigits(text)
+        setFieldError("phone", clean !== text ? "El teléfono solo puede contener números" : null)
+        setPhone(clean)
+    }
+
+    const onRegister = () => {
+        const confirmError = !confirmPassword
+            ? "Confirma tu contraseña"
+            : confirmPassword !== password
+                ? "Las contraseñas no coinciden"
+                : null
+
+        const result: FieldErrors = {
+            fullName: validateLetters(fullName, "El nombre"),
+            lastName: validateLetters(lastName, "El apellido"),
+            phone: validatePhone(phone),
+            email: validateEmail(email),
+            password: validatePassword(password),
+            confirmPassword: confirmError,
+        }
+        setErrors(result)
+
+        const messages = Object.values(result).filter((m): m is string => !!m)
+        if (messages.length > 0) {
+            console.log("VALIDACION REGISTRO:", messages)
+            Alert.alert("Revisa los datos", messages.join("\n"))
+            return
+        }
+        handleRegister()
+    }
+
     return (
         <KeyboardAvoidingView
             style={styles.container}
@@ -38,82 +90,102 @@ export default function RegisterScreen() {
                     <Text style={styles.cardTitle}>Create Account</Text>
                     <Text style={styles.label}>full name</Text>
 
-                    <View style={styles.inputContainer}>
+                    <View style={[styles.inputContainer, !!errors.fullName && styles.inputError]}>
                         <Feather name="user" size={20} color="#9ca3af"></Feather>
                         <TextInput style={{ flex: 1, height: "100%", marginLeft: 8 }}
                             placeholder="marilyn "
                             value={fullName}
-                            onChangeText={setFullName}>
+                            onChangeText={(text) => onChangeLetters(text, "fullName", "El nombre", setFullName)}>
                         </TextInput>
                     </View>
+                    <FieldError message={errors.fullName} />
 
                     <Text style={styles.label}>Last Name</Text>
-                    <View style={styles.inputContainer}>
+                    <View style={[styles.inputContainer, !!errors.lastName && styles.inputError]}>
                         <Feather name="user" size={20} color="#9ca3af"></Feather>
                         <TextInput
                             style={{ flex: 1, height: "100%", marginLeft: 8 }}
                             placeholder="argueta"
                             value={lastName}
-                            onChangeText={setLastName}
+                            onChangeText={(text) => onChangeLetters(text, "lastName", "El apellido", setLastName)}
                         >
 
                         </TextInput>
 
                     </View>
+                    <FieldError message={errors.lastName} />
 
                     <Text style={styles.label}>phone</Text>
-                    <View style={styles.inputContainer}>
+                    <View style={[styles.inputContainer, !!errors.phone && styles.inputError]}>
                         <Feather name="phone" size={20} color="#9ca3af"></Feather>
                         <TextInput
                             style={{ flex: 1, height: "100%", marginLeft: 8 }}
                             placeholder="72995648"
+                            keyboardType="number-pad"
+                            maxLength={8}
                             value={phone}
-                            onChangeText={setPhone}
+                            onChangeText={onChangePhone}
                         >
 
                         </TextInput>
 
                     </View>
+                    <FieldError message={errors.phone} />
 
                     <Text style={styles.label}>email address</Text>
-                    <View style={styles.inputContainer}>
+                    <View style={[styles.inputContainer, !!errors.email && styles.inputError]}>
                         <Feather name="mail" size={20} color="#9ca3af"></Feather>
                         <TextInput style={{ flex: 1, height: "100%", marginLeft: 8 }}
                             placeholder="marilyn@gmail.com"
                             keyboardType="email-address"
+                            autoCapitalize="none"
                             value={email}
-                            onChangeText={setEmail}>
+                            onChangeText={(text) => { setEmail(text); setFieldError("email", null) }}
+                            onBlur={() => setFieldError("email", validateEmail(email))}>
 
 
                         </TextInput>
                     </View>
+                    <FieldError message={errors.email} />
 
                     <Text style={styles.label}>password</Text>
-                    <View style={styles.inputContainer}>
+                    <View style={[styles.inputContainer, !!errors.password && styles.inputError]}>
                         <Feather name="lock" size={20} color="#9ca3af"></Feather>
                         <TextInput
                             style={{ flex: 1, height: "100%", marginLeft: 8 }}
                             placeholder="******"
-                            secureTextEntry={true}
+                            autoCapitalize="none"
+                            secureTextEntry={!showPassword}
                             value={password}
-                            onChangeText={setPassword}>
+                            onChangeText={(text) => { setPassword(text); setFieldError("password", null) }}
+                            onBlur={() => setFieldError("password", validatePassword(password))}>
 
                         </TextInput>
+                        <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                            <Feather name={showPassword ? "eye-off" : "eye"} size={20} color="#9ca3af" />
+                        </TouchableOpacity>
                     </View>
+                    <FieldError message={errors.password} />
 
                     <Text style={styles.label}>confirm password</Text>
-                    <View style={styles.inputContainer}>
+                    <View style={[styles.inputContainer, !!errors.confirmPassword && styles.inputError]}>
                         <Feather name="lock" size={20} color="#9ca3af"></Feather>
                         <TextInput
                             style={{ flex: 1, height: "100%", marginLeft: 8 }}
                             placeholder="******"
-                            secureTextEntry={true}
+                            autoCapitalize="none"
+                            secureTextEntry={!showConfirm}
                             value={confirmPassword}
-                            onChangeText={setConfirmPassword}>
+                            onChangeText={(text) => { setConfirmPassword(text); setFieldError("confirmPassword", null) }}
+                            onBlur={() => setFieldError("confirmPassword", confirmPassword !== password ? "Las contraseñas no coinciden" : null)}>
 
 
                         </TextInput>
+                        <TouchableOpacity onPress={() => setShowConfirm(!showConfirm)}>
+                            <Feather name={showConfirm ? "eye-off" : "eye"} size={20} color="#9ca3af" />
+                        </TouchableOpacity>
                     </View>
+                    <FieldError message={errors.confirmPassword} />
 
                     {errorMessage && (
                         <View style={styles.errorContainer}>
@@ -129,7 +201,7 @@ export default function RegisterScreen() {
                     ) : (
                         <TouchableOpacity
                             style={styles.buttonRegister}
-                            onPress={handleRegister}
+                            onPress={onRegister}
                         >
                             <Text style={styles.buttonRegisterText}>Register</Text>
                         </TouchableOpacity>
@@ -194,6 +266,15 @@ const styles = StyleSheet.create({
         paddingHorizontal: 12,
         height: 50,
         marginBottom: 15
+    },
+    inputError: {
+        borderColor: "#dc2626"
+    },
+    fieldError: {
+        color: "#dc2626",
+        fontSize: 12,
+        marginTop: -8,
+        marginBottom: 12
     },
     buttonRegister: {
         borderWidth: 1,

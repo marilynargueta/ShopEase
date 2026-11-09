@@ -4,15 +4,18 @@ import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { useDrawer } from '../src/admin/viewmodels/use-drawer'
 import { useAuth } from '../src/context/AuthContext'
-import { useRouter } from 'expo-router'
+import { Redirect, useRouter } from 'expo-router'
 import { useState } from 'react'
 
 export default function ProtectedLayout() {
 
     const { profile, navigationOptions } = useDrawer()
-    const { clearSession } = useAuth()
+    const { clearSession, token, isLoadingSession } = useAuth()
     const router = useRouter()
     const [isInventoryExpanded, setIsInventoryExpanded] = useState(false)
+
+    if (isLoadingSession) return null
+    if (!token) return <Redirect href={"/" as any} />
 
     return (
         <GestureHandlerRootView>

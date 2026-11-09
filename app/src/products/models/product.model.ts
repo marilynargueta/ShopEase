@@ -6,7 +6,7 @@ export interface CreateProductRequest{
     regularPrice:number
     offerPrice?:number
     initialStock:number
-    minStockeAlert:number
+    minStockAlert:number
 
 }
 
@@ -18,7 +18,7 @@ export interface CreateProductResponse{
     regularPrice:number
     offerPrice?:number
     initialStock:number
-    minStockeAlert:number
+    minStockAlert:number
     createAt?:string
     updatedAt?:string
 }
@@ -31,7 +31,7 @@ export interface ProductItem{
     description:string
     regularPrice:number
     offerPrice?:number
-    minStockeAlert:number
+    minStockAlert:number
     imageUrl?:string
     createdAt?:string
     updatedAt?:string

@@ -1,6 +1,8 @@
 import { UserResponse } from "../auth/models/auth.model"
 import { createContext, useEffect, useState,useContext} from "react"
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { AuthService } from "../auth/services/auth.service";
+import { setUnauthorizedHandler } from "@/api/ApiClient"
 
 interface AuthContextType{
     token:string | null
@@ -18,26 +20,34 @@ export const AuthProvider:React.FC<{children:React.ReactNode}>=({children})=>{
     const [user,setUser]=useState<UserResponse|null>(null)
     const [isLoadingSession,setIsLoadingSession]=useState(true)
 
-    useEffect(()=>{
-        const loadSession=async()=>{
-            try{
-                const savedToken=await AsyncStorage.getItem("@Auth_token")
-                const savedUser=await AsyncStorage.getItem("@Auth_user")
-                if(savedToken&& savedUser){
+useEffect(() => {
+    const loadSession = async () => {
+        try {
+            const savedToken = await AsyncStorage.getItem("@Auth_token");
+            const savedUser = await AsyncStorage.getItem("@Auth_user");
+            if (savedToken && savedUser) {
+                try {
+                    const isValid = await AuthService.validateToken(savedToken)
+                    if (isValid) {
+                        setToken(savedToken)
+                        setUser(JSON.parse(savedUser))
+                    } else {
+                        await AsyncStorage.multiRemove(["@Auth_token", "@Auth_user"])
+                    }
+                } catch (error) {
+                    // error de red o servidor: no se cierra la sesion
                     setToken(savedToken)
                     setUser(JSON.parse(savedUser))
-
-                    console.log("Session restaurada con exito")
                 }
-            } catch(error){
-                console.log("Error al cargar la session")
-            }finally{
-                setIsLoadingSession(false)
             }
+        } catch (error) {
+            console.log("error al cargar la sesion", error)
+        } finally {
+            setIsLoadingSession(false)
         }
-
-        loadSession();
-    }, [])
+    }
+    loadSession()
+}, [])
 
     const saveSession= async (newToken:string,newUser:UserResponse)=>{
         try{
@@ -72,6 +82,11 @@ export const AuthProvider:React.FC<{children:React.ReactNode}>=({children})=>{
             console.log("error al persistir  la data", error)
         }
     }
+
+    useEffect(() => {
+        setUnauthorizedHandler(() => { clearSession() })
+        return () => setUnauthorizedHandler(null)
+    }, [])
 
     return <AuthContext.Provider value={{token,user,isLoadingSession, saveSession,updateUserSession,clearSession}}>
         {children}

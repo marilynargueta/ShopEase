@@ -7,41 +7,69 @@ import { ScrollView, TextInput } from "react-native-gesture-handler"
 import { useAuth } from "../src/context/AuthContext"
 import { useState } from "react"
 import { CategoryService } from "../src/categories/services/category.service"
+import { filterLetters, validateLetters } from "../src/utils/validators"
 export default function InventoryScreen() {
     const router = useRouter()
     const { token } = useAuth()
     const [name, setName] = useState("")
     const [description, setDescription] = useState("")
     const [isLoading, setIsLoading] = useState(false)
+    const [nameError, setNameError] = useState<string | null>(null)
+    const [descriptionError, setDescriptionError] = useState<string | null>(null)
 
+    const onChangeName = (text: string) => {
+        const clean = filterLetters(text)
+        setNameError(clean !== text ? "El nombre solo puede contener letras, no números ni símbolos" : null)
+        setName(clean)
+    }
+
+    const onChangeDescription = (text: string) => {
+        setDescription(text)
+        setDescriptionError(null)
+    }
 
     const handleSaveCategory = async () => {
-        if (!name.trim()) {
-            Alert.alert("campo requerido, por favor ingrese el nombre de la categoria")
+        const nError = validateLetters(name, "El nombre de la categoría")
+        const dError = !description.trim()
+            ? "La descripción es obligatoria"
+            : description.trim().length < 5
+                ? "La descripción debe tener al menos 5 caracteres"
+                : null
+        setNameError(nError)
+        setDescriptionError(dError)
+
+        const messages = [nError, dError].filter((m): m is string => !!m)
+        if (messages.length > 0) {
+            console.log("VALIDACION CATEGORIA:", messages)
+            Alert.alert("Revisa los datos", messages.join("\n"))
             return
-        }
-        if (!description.trim()) {
-            Alert.alert("campo requerido, ingrese la descripcion")
         }
         if (!token) {
             Alert.alert("error de session, no se encontro el token")
+            return
         }
         setIsLoading(true)
         try {
+            console.log("GUARDANDO CATEGORIA:", name, description) // LOG NUEVO
             const newCategory = await CategoryService.createCategory(name, description, token)
-            Alert.alert("categoria creada" + `la categoria ${newCategory.name} se guardo con exito`),
+            console.log("RESPUESTA CREAR CATEGORIA:", JSON.stringify(newCategory)) // LOG NUEVO
+            Alert.alert(
+                "categoria creada",
+                `la categoria ${newCategory.name} se guardo con exito`,
                 [
                     {
                         text: "aceptar",
-                        onprogress: () => {
+                        onPress: () => {
                             setName("")
                             setDescription("")
                             router.replace("/(protected)/dashboard")
                         }
                     }
                 ]
+            )
         } catch (error: any) {
-            Alert.alert("Error" + error.message || "no se puedo guardar la categoria")
+            console.log("ERROR CREAR CATEGORIA:", error.message) // LOG NUEVO
+            Alert.alert("Error", error.message || "no se pudo guardar la categoria")
         }
         finally {
             setIsLoading(false)
@@ -80,11 +108,12 @@ export default function InventoryScreen() {
                             <Text style={styles.inputLabel}>Nombre de la categoria</Text>
                             <TextInput
                                 placeholder="Ej. Dulceria"
-                                style={styles.textInput}
+                                style={[styles.textInput, !!nameError && styles.inputError]}
                                 value={name}
-                                onChangeText={setName}
+                                onChangeText={onChangeName}
                                 editable={!isLoading}
                             />
+                            {nameError && <Text style={styles.fieldError}>{nameError}</Text>}
                         </View>
 
                         <View style={styles.inputGroup}>
@@ -94,11 +123,12 @@ export default function InventoryScreen() {
                                 multiline
                                 numberOfLines={5}
                                 textAlignVertical="top"
-                                style={styles.textAreaInput}
+                                style={[styles.textAreaInput, !!descriptionError && styles.inputError]}
                                 value={description}
-                                onChangeText={setDescription}
+                                onChangeText={onChangeDescription}
                                 editable={!isLoading}
                             />
+                            {descriptionError && <Text style={styles.fieldError}>{descriptionError}</Text>}
                         </View>
 
                         <TouchableOpacity 
@@ -117,9 +147,11 @@ export default function InventoryScreen() {
                             
                         </TouchableOpacity>
 
-                        <TouchableOpacity style={styles.btnCancel}>
-                            
-                            <Text style={styles.btnCancelText}>Guardar Categoria</Text>
+                        <TouchableOpacity
+                            style={styles.btnCancel}
+                            onPress={() => router.replace("/(protected)/dashboard")}
+                        >
+                            <Text style={styles.btnCancelText}>Cancelar</Text>
                         </TouchableOpacity>
                     </View>
                 </ScrollView>
@@ -210,6 +242,14 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
         paddingVertical: 12,
         fontSize: 14
+    },
+    inputError: {
+        borderColor: "#dc2626"
+    },
+    fieldError: {
+        color: "#dc2626",
+        fontSize: 12,
+        marginTop: 4
     },
     btnSave: {
         backgroundColor: "#006c47",

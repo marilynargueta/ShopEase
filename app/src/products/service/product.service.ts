@@ -4,7 +4,7 @@ import {
   CreateProductResponse,
 } from "../models/product.model";
 import axios from "axios";
-import { API_URL } from "@/api/ApiClient";
+import { apiClient } from "@/api/ApiClient";
 import { ProductItem } from "../models/product.model";
 
 export const ProductService = {
@@ -16,12 +16,12 @@ export const ProductService = {
       const authTokenHeader = token?.startsWith("Bearer")
         ? token
         : `Bearer ${token}`;
-      const response = await axios.post<CreateProductResponse>(
-        `${API_URL}/products/create`,
+      const response = await apiClient.post<CreateProductResponse>(
+        `/products/create`,
         productRequest,
         {
           headers: {
-            Authorization: authTokenHeader,
+            Authorization:  authTokenHeader,
             "Content-Type": "application/json",
           },
         },
@@ -47,8 +47,8 @@ export const ProductService = {
         ? token
         : `Bearer ${token}`;
       const authTokenHeader = autorizedToken;
-      const response = await axios.get<ProductItem[]>(
-        `${API_URL}/products/category/${categoryId}`,
+      const response = await apiClient.get<ProductItem[]>(
+        `/products/category/${categoryId}`,
         {
           headers: {
             Authorization: authTokenHeader,

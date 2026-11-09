@@ -12,7 +12,8 @@ import { useRouter } from "expo-router";
 import { useAuth } from "../src/context/AuthContext";
 import { CategoryService } from "../src/categories/services/category.service";
 import { useCreateProduct } from "../src/products/viewmodels/use-create-product";
-
+import { useFocusEffect } from "expo-router";
+import { useCallback } from "react";
 
 const { width } = Dimensions.get('window')
 const CARD_WIDTH = (width - 44) / 2 //ANCHO TOTAL - MARGENES LATERALES
@@ -30,6 +31,8 @@ export default function DashboardScreen() {
         setSearchQuery,
         isLoadingCategories,
         IsLoadingProduct: isLoadingProduct,
+        refreshCategories, // CAMBIO 1
+        refreshProducts, // CAMBIO 1
 
 
     }=useCreateProduct()
@@ -37,6 +40,14 @@ export default function DashboardScreen() {
     const openMenu = () => {
         navigation.dispatch(DrawerActions.openDrawer)
     }
+
+    // CAMBIO 2: recarga categorias y productos cada vez que la pantalla se muestra
+    useFocusEffect(
+        useCallback(() => {
+            refreshCategories()
+            refreshProducts()
+        }, [])
+    )
 
     return (
         <SafeAreaView style={styles.container}>

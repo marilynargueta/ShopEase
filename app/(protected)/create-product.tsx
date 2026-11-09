@@ -1,11 +1,16 @@
 import { Feather, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import Drawer from 'expo-router/drawer';
-import { View, Text, StyleSheet, KeyboardAvoidingView, Platform, TouchableOpacity, ScrollView, ActivityIndicator, Modal,FlatList, TextInput } from 'react-native';
+import { View, Text, StyleSheet, KeyboardAvoidingView, Platform, TouchableOpacity, ScrollView, ActivityIndicator, Modal,FlatList, TextInput, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { useCreateProduct } from '../src/products/viewmodels/use-create-product';
+import { filterDecimal, filterDigits, filterLetters, validateDecimal, validateInteger, validateLetters } from '../src/utils/validators';
 
+type FieldErrors = Record<string, string | null>
+
+const FieldError = ({ message }: { message?: string | null }) =>
+    message ? <Text style={styles.fieldError}>{message}</Text> : null
 
 export default function CreateProductScreen() {
 
@@ -37,6 +42,84 @@ export default function CreateProductScreen() {
         selectedCategoryName,
         setSelectedCategoryName
     } = useCreateProduct()
+
+    const [errors, setErrors] = useState<FieldErrors>({})
+
+    const setFieldError = (key: string, message: string | null) =>
+        setErrors((prev) => ({ ...prev, [key]: message }))
+
+    const onChangeName = (text: string) => {
+        const clean = filterLetters(text)
+        setFieldError("name", clean !== text ? "El nombre solo puede contener letras, no números ni símbolos" : null)
+        setName(clean)
+    }
+
+    const onChangeSku = (text: string) => {
+        const clean = text.replace(/[^A-Za-z0-9-]/g, "")
+        setFieldError("sku", clean !== text ? "El SKU solo puede contener letras, números y guiones" : null)
+        setSku(clean)
+    }
+
+    const onChangeDescription = (text: string) => {
+        setDescription(text)
+        setFieldError("description", null)
+    }
+
+    const onChangeDecimal = (text: string, key: string, label: string, setter: (v: string) => void) => {
+        const clean = filterDecimal(text)
+        setFieldError(key, clean !== text ? `${label} solo puede contener números (ej. 3.50)` : null)
+        setter(clean)
+    }
+
+    const onChangeInteger = (text: string, key: string, label: string, setter: (v: string) => void) => {
+        const clean = filterDigits(text)
+        setFieldError(key, clean !== text ? `${label} solo puede contener números enteros` : null)
+        setter(clean)
+    }
+
+    const onSave = () => {
+        const regular = parseFloat(regularPrice)
+        const offer = parseFloat(offerPrice)
+
+        let regularError = validateDecimal(regularPrice, "El precio regular")
+        if (!regularError && regular <= 0) regularError = "El precio regular debe ser mayor a 0"
+
+        let offerError: string | null = null
+        if (offerPrice.trim()) {
+            offerError = validateDecimal(offerPrice, "El precio de oferta")
+            if (!offerError && offer > regular) offerError = "El precio de oferta no puede ser mayor al regular"
+        }
+
+        const result: FieldErrors = {
+            name: validateLetters(name, "El nombre del producto"),
+            category: categoryId ? null : "Selecciona una categoría",
+            sku: !sku.trim() ? "El SKU es obligatorio" : null,
+            description: !description.trim()
+                ? "La descripción es obligatoria"
+                : description.trim().length < 5
+                    ? "La descripción debe tener al menos 5 caracteres"
+                    : null,
+            regularPrice: regularError,
+            offerPrice: offerError,
+            initialStock: validateInteger(initialStock, "El stock inicial"),
+            minStockAlert: minStockAlert.trim()
+                ? validateInteger(minStockAlert, "El stock mínimo") ||
+                  (!validateInteger(initialStock, "El stock inicial") && parseInt(minStockAlert, 10) > parseInt(initialStock, 10)
+                      ? "El stock mínimo no puede ser mayor al stock inicial"
+                      : null)
+                : null,
+        }
+        setErrors(result)
+
+        const messages = Object.values(result).filter((m): m is string => !!m)
+        if (messages.length > 0) {
+            console.log("VALIDACION PRODUCTO:", messages)
+            Alert.alert("Revisa los datos", messages.join("\n"))
+            return
+        }
+        submitProduct()
+    }
+
     return (
         <SafeAreaView
             style={styles.container}
@@ -74,16 +157,17 @@ export default function CreateProductScreen() {
                             </Text>
                             <TextInput
                                 placeholder='Ej. Zapato Nike'
-                                style={styles.textInput}
+                                style={[styles.textInput, !!errors.name && styles.inputError]}
                                 value={name}
-                                onChangeText={setName}
+                                onChangeText={onChangeName}
                             />
+                            <FieldError message={errors.name} />
                         </View>
 
                         <View style={styles.inputGroup}>
                             <Text style={styles.inputLabel}>Categoriaaa</Text>
                             <TouchableOpacity
-                                style={styles.selectorInput}
+                                style={[styles.selectorInput, !!errors.category && !categoryId && styles.inputError]}
                                 onPress={() => setIsCategoriesShowModal(true) }
                             >
                                 <Text>{selectedCategoryName || "seleccionar categoria"}</Text>
@@ -92,11 +176,12 @@ export default function CreateProductScreen() {
                                     size={20}
                                 />
                             </TouchableOpacity>
+                            {!categoryId && <FieldError message={errors.category} />}
                         </View>
 
                         <View style={styles.inputGroup}>
                             <Text style={styles.inputLabel}>SKU / codigo de barra</Text>
-                            <View style={styles.inputWithIcon}>
+                            <View style={[styles.inputWithIcon, !!errors.sku && styles.inputError]}>
                                 <MaterialCommunityIcons
                                     name='barcode-scan'
                                     size={20}
@@ -105,11 +190,13 @@ export default function CreateProductScreen() {
                                 <TextInput
                                     placeholder='PR-7878787878'
                                     style={styles.textInputScan}
+                                    autoCapitalize='characters'
                                     value={sku}
-                                    onChangeText={setSku}
+                                    onChangeText={onChangeSku}
                                 />
 
                             </View>
+                            <FieldError message={errors.sku} />
                         </View>
                         <View style={styles.inputGroup}>
                             <Text style={styles.inputLabel}>descripcion detallada</Text>
@@ -119,10 +206,11 @@ export default function CreateProductScreen() {
                                 numberOfLines={5}
                                 textAlignVertical='top'
                                 maxLength={2000}
-                                style={styles.textAreaInput}
+                                style={[styles.textAreaInput, !!errors.description && styles.inputError]}
                                 value={description}
-                                onChangeText={setDescription}
+                                onChangeText={onChangeDescription}
                             />
+                            <FieldError message={errors.description} />
                         </View>
                         <View style={styles.chartCounterDescription}>
                             <Text>{description.length}/2000</Text>
@@ -145,30 +233,32 @@ export default function CreateProductScreen() {
 
                                 <View style={styles.col}>
                                     <Text style={styles.inputLabel}>Precio Regular</Text>
-                                    <View style={styles.inputPriceWrapper}>
+                                    <View style={[styles.inputPriceWrapper, !!errors.regularPrice && styles.inputError]}>
                                         <Text style={{ marginRight: 6 }}>$</Text>
                                         <TextInput
                                             placeholder='0.0'
-                                            keyboardType='numeric'
+                                            keyboardType='decimal-pad'
                                             style={styles.priceInput}
                                             value={regularPrice}
-                                            onChangeText={setRegularPrice}
+                                            onChangeText={(text) => onChangeDecimal(text, "regularPrice", "El precio regular", setRegularPrice)}
                                         />
                                     </View>
+                                    <FieldError message={errors.regularPrice} />
                                 </View>
 
                                 <View style={styles.col}>
                                     <Text style={styles.inputLabel}>Precio de Oferta</Text>
-                                    <View style={styles.inputPriceWrapper}>
+                                    <View style={[styles.inputPriceWrapper, !!errors.offerPrice && styles.inputError]}>
                                         <Text style={{ marginRight: 6 }}>$</Text>
                                         <TextInput
                                             placeholder='0.0'
-                                            keyboardType='numeric'
+                                            keyboardType='decimal-pad'
                                             style={styles.priceInput}
                                             value={offerPrice}
-                                            onChangeText={setOfferPrice}
+                                            onChangeText={(text) => onChangeDecimal(text, "offerPrice", "El precio de oferta", setOfferPrice)}
                                         />
                                     </View>
+                                    <FieldError message={errors.offerPrice} />
                                 </View>
 
 
@@ -178,30 +268,32 @@ export default function CreateProductScreen() {
 
                                 <View style={styles.col}>
                                     <Text style={styles.inputLabel}>Stock Inicial</Text>
-                                    <View style={styles.inputPriceWrapper}>
+                                    <View style={[styles.inputPriceWrapper, !!errors.initialStock && styles.inputError]}>
                                         <Text style={{ marginRight: 6 }}>$</Text>
                                         <TextInput
                                             placeholder='50'
-                                            keyboardType='numeric'
+                                            keyboardType='number-pad'
                                             style={styles.priceInput}
                                             value={initialStock}
-                                            onChangeText={setInitialStock}
+                                            onChangeText={(text) => onChangeInteger(text, "initialStock", "El stock inicial", setInitialStock)}
                                         />
                                     </View>
+                                    <FieldError message={errors.initialStock} />
                                 </View>
 
                                 <View style={styles.col}>
                                     <Text style={styles.inputLabel}>Stock Minimo</Text>
-                                    <View style={styles.inputPriceWrapper}>
+                                    <View style={[styles.inputPriceWrapper, !!errors.minStockAlert && styles.inputError]}>
                                         <Text style={{ marginRight: 6 }}>$</Text>
                                         <TextInput
                                             placeholder='5'
-                                            keyboardType='numeric'
+                                            keyboardType='number-pad'
                                             style={styles.priceInput}
                                             value={minStockAlert}
-                                            onChangeText={setMinStockAlert}
+                                            onChangeText={(text) => onChangeInteger(text, "minStockAlert", "El stock mínimo", setMinStockAlert)}
                                         />
                                     </View>
+                                    <FieldError message={errors.minStockAlert} />
                                 </View>
 
 
@@ -210,7 +302,7 @@ export default function CreateProductScreen() {
 
                         <TouchableOpacity
                             style={styles.btnSave}
-                            onPress={submitProduct}
+                            onPress={onSave}
                             disabled={IsLoadingProduct}
                         >
                             {IsLoadingProduct ? (
@@ -381,6 +473,14 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
         paddingVertical: 12,
         fontSize: 14
+    },
+    inputError: {
+        borderColor: "#dc2626"
+    },
+    fieldError: {
+        color: "#dc2626",
+        fontSize: 12,
+        marginTop: 4
     },
     chartCounterDescription: {
         flexDirection: "row",
