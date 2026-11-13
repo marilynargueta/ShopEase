@@ -121,7 +121,11 @@ export default function DashboardScreen() {
                 contentContainerStyle={styles.producList}
                 showsVerticalScrollIndicator={false}
                 renderItem={({ item }) => (
-                    <View style={styles.cardContainer}>
+                    <TouchableOpacity
+                        style={styles.cardContainer}
+                        activeOpacity={0.8}
+                        onPress={() => router.push("/(protected)/product-detail" as any)}
+                    >
                         <View style={styles.imageWrapper}>
 
                             <Image
@@ -142,7 +146,7 @@ export default function DashboardScreen() {
                                 </TouchableOpacity>
                             </View>
                         </View>
-                    </View>
+                    </TouchableOpacity>
                 )}
             />
         </SafeAreaView>

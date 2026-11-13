@@ -70,10 +70,7 @@ export function useCreateProduct() {
         try {
             const data = await CategoryService.getCategories(token)
             console.log("categorias recibidas:", JSON.stringify(data))
-            const uniqueCategories = data.filter(
-                (c, index, arr) => arr.findIndex((x) => x.name === c.name) === index
-            )
-            setCategories(uniqueCategories)
+            setCategories(data)
         } catch (error: any) {
             console.log("error al cargar las categorias", error.message)
         }
