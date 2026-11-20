@@ -15,6 +15,19 @@ const PRODUCT = {
     discount: 22,
     stock: 18,
     shipping: "Envío Motorizado Hoy",
+    descriptionIntro: "El teclado inalámbrico de alto rendimiento ",
+    descriptionBold: "ShopEase Pro RGB",
+    descriptionRest:
+        " combina una estética minimalista con la máxima durabilidad y respuesta táctil para profesionales y gamers.",
+    descriptionExtra:
+        "Equipado con un chasis de aluminio pulido anodizado CNC, amortiguación interna de silicona EVA de doble capa para suprimir resonancias, y un dial rotativo multifunción para volumen y brillo.",
+    specs: [
+        { label: "Distribución", value: "75% Compacta (82 Teclas)" },
+        { label: "Keycaps", value: "PBT Doble Inyección OEM" },
+        { label: "Tasa de Sondeo", value: "1000Hz (2.4Ghz y Cable)" },
+        { label: "Capacidad de Batería", value: "4000 mAh Li-ion" },
+        { label: "Peso", value: "860 gramos" },
+    ],
 }
 
 export default function ProductDetailScreen() {
@@ -93,6 +106,42 @@ export default function ProductDetailScreen() {
                 <View style={styles.priceCard}>
                     <Text style={styles.price}>${PRODUCT.price.toFixed(2)}</Text>
                     <Text style={styles.oldPrice}>${PRODUCT.oldPrice.toFixed(2)}</Text>
+                </View>
+
+                {/* Descripción del producto */}
+                <View style={styles.infoCard}>
+                    <View style={styles.infoHeader}>
+                        <Text style={styles.infoTitle}>Descripción del Producto</Text>
+                        <Feather name="chevron-down" size={24} color="#475569" />
+                    </View>
+                    <Text style={styles.descriptionText}>
+                        {PRODUCT.descriptionIntro}
+                        <Text style={styles.descriptionBold}>{PRODUCT.descriptionBold}</Text>
+                        {PRODUCT.descriptionRest}
+                    </Text>
+                    <Text style={[styles.descriptionText, { marginTop: 12 }]}>
+                        {PRODUCT.descriptionExtra}
+                    </Text>
+                </View>
+
+                {/* Ficha técnica completa */}
+                <View style={styles.infoCard}>
+                    <View style={styles.infoHeader}>
+                        <Text style={styles.infoTitle}>Ficha Técnica Completa</Text>
+                        <Feather name="chevron-up" size={24} color="#475569" />
+                    </View>
+                    {PRODUCT.specs.map((spec, index) => (
+                        <View
+                            key={spec.label}
+                            style={[
+                                styles.specRow,
+                                index === PRODUCT.specs.length - 1 && styles.specRowLast
+                            ]}
+                        >
+                            <Text style={styles.specLabel}>{spec.label}</Text>
+                            <Text style={styles.specValue}>{spec.value}</Text>
+                        </View>
+                    ))}
                 </View>
             </ScrollView>
         </SafeAreaView>
@@ -268,5 +317,57 @@ const styles = StyleSheet.create({
         color: "#6b7280",
         textDecorationLine: "line-through",
         marginBottom: 8
+    },
+    infoCard: {
+        backgroundColor: "#fff",
+        borderRadius: 16,
+        borderWidth: 1,
+        borderColor: "#e5e7eb",
+        marginHorizontal: 16,
+        marginTop: 16,
+        padding: 20
+    },
+    infoHeader: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+        marginBottom: 14
+    },
+    infoTitle: {
+        fontSize: 20,
+        fontWeight: "bold",
+        color: "#111827"
+    },
+    descriptionText: {
+        fontSize: 16,
+        lineHeight: 24,
+        color: "#4b5563"
+    },
+    descriptionBold: {
+        fontWeight: "bold",
+        color: "#374151"
+    },
+    specRow: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+        paddingVertical: 14,
+        borderBottomWidth: 1,
+        borderBottomColor: "#eef0f3",
+        gap: 12
+    },
+    specRowLast: {
+        borderBottomWidth: 0
+    },
+    specLabel: {
+        fontSize: 16,
+        color: "#64748b"
+    },
+    specValue: {
+        flex: 1,
+        textAlign: "right",
+        fontSize: 16,
+        fontWeight: "600",
+        color: "#111827"
     }
 })
